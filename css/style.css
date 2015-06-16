@@ -1,0 +1,24 @@
+body{
+	margin: 0;
+        background-color: black;
+}
+
+video, #drawCanvas, #container{
+	position: absolute;
+	margin-top: 0;
+	margin-left: 200px;
+        -moz-transform: scaleX(-1);
+        -o-transform: scaleX(-1);
+        -webkit-transform: scaleX(-1);
+        transform: scaleX(-1);
+        filter: FlipH;
+        -ms-filter: "FlipH";
+}
+
+
+
+#displayNumbers{
+	position: fixed;
+	bottom: 100px;
+	color: white;
+}

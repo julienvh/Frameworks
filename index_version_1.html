@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<meta charset="utf-8"/>
+<script src="js/clmtrackr.min.js"></script>
+<script src="js/model_pca_20_svm.js"></script>
+<link rel="stylesheet" href="css/style.css">
+
+<video id="inputVideo" width="800" height="600" autoplay loop>
+</video>
+<canvas id="drawCanvas" width="800" height="600"></canvas>
+<div id="displayNumbers">
+<div id="templeDistance">
+   
+</div>
+<div id ="eyeDistance">
+
+</div>
+
+<!-- Afstand temple/eye -->
+<div id ="TOTAL">
+  </div>
+    </div>
+
+
+<script type="text/javascript">
+  var videoInput = document.getElementById('inputVideo');
+  var positions;
+  var distanceMouth;
+  var i = 0;
+  var ctracker = new clm.tracker();
+  var averageValue = [];
+  var shapeValue = 0;
+  var timer = 0;
+  var shapeChoice;
+  var graphicSwitch = false;
+ 
+
+  ctracker.init(pModel);
+  ctracker.start(videoInput);
+  getVideo();
+  drawLoop();
+ 
+
+//DRAW CANVAS 
+  
+  function drawLoop() {
+    positions = ctracker.getCurrentPosition();  
+
+    var canvasInput = document.getElementById('drawCanvas');
+    var cc = canvasInput.getContext('2d');
+    
+    requestAnimationFrame(drawLoop);
+    var pos0 = positions[0];
+    var pos1 = positions[1];
+    var pos2 = positions[2];
+    var pos7 = positions[7];
+
+    var pos13 = positions[13];
+    var pos14 = positions[14];
+
+    // var pos25 = positions[25];
+    var pos27 = positions[27];
+
+    // var pos30 = positions[30];
+    var pos32 = positions[32];
+
+    var pos37 = positions[37];
+
+    var pos44 = positions[44];
+    var pos50 = positions[50];
+    
+    
+    console.log(graphicSwitch);
+    cc.clearRect(0, 0, canvasInput.width, canvasInput.height);
+
+    if (graphicSwitch == false) {
+      cc.strokeStyle = "#0000ff";
+      cc.beginPath();
+      cc.moveTo(pos44[0], pos44[1]);
+      cc.lineTo(pos50[0],pos50[1]);
+      cc.closePath();
+      cc.stroke();
+
+      cc.strokeStyle = "#0000ff";
+      cc.beginPath();
+      cc.moveTo(pos27[0],pos27[1]);
+      cc.lineTo(pos32[0],pos32[1]);
+      cc.closePath();
+      cc.stroke();
+      
+
+/*GET DISTANCE OF CERTAIN POINTS*/
+
+      distanceMouth = lineDistance(pos44[0],pos44[1],pos50[0],pos50[1]);
+      var templeDistance = document.getElementById('templeDistance');
+      templeDistance.innerHTML = distanceMouth;
+
+      distanceEyes = lineDistance(pos27[0],pos27[1],pos32[0],pos32[1]);
+      var eyeDistance = document.getElementById('eyeDistance');
+      eyeDistance.innerHTML = distanceEyes;
+
+      var total = document.getElementById('TOTAL');  
+      shapeValue = getAverageValue(distanceMouth / distanceEyes);
+      total.innerHTML = shapeValue;
+    }
+
+    timer++;
+    if(timer == 400){
+
+      shapeChoice = getShape(shapeValue);
+    }
+
+/*DRAW GRAPHIC ON FACE*/
+    if (graphicSwitch == true) {
+      
+      if(shapeChoice == "triangle"){  
+        console.log("got this back:"+shapeChoice); 
+        var correction1 = lineDistance(pos0[0],pos0[1], pos2[0],pos2[1])*2;     
+        cc.strokeStyle = "#0000ff";
+        cc.beginPath();
+        cc.moveTo(pos0[0] - correction1, pos0[1]- correction1);
+        cc.lineTo(pos14[0] + correction1,pos14[1] - correction1);
+        cc.lineTo(pos7[0],pos7[1] + correction1);
+        cc.lineTo(pos0[0] - correction1, pos0[1]- correction1);;
+        cc.closePath();
+        cc.fillStyle = "#0000ff";
+        cc.fill();
+        cc.stroke();
+      }
+
+      else if(shapeChoice == "square"){
+        console.log("got this back:"+shapeChoice);
+        cc.strokeStyle = "#0000ff";
+        cc.beginPath();
+        var correction1 = lineDistance(pos0[0],pos0[1], pos1[0],pos1[1]);
+        cc.moveTo(pos0[0] - correction1, pos0[1]- correction1*2);
+        cc.lineTo(pos14[0] + correction1,pos14[1] - correction1*2);
+        var rectLenght = lineDistance(pos0[0] - correction1, pos0[1]- correction1*2, pos14[0] + correction1,pos14[1] - correction1*2);
+        cc.lineTo(pos14[0] + correction1, pos0[1]- correction1*2 + rectLenght);
+        cc.lineTo(pos0[0] - correction1 , pos0[1]- correction1*2 + rectLenght);
+        cc.closePath();
+        cc.fillStyle = "#0000ff";
+        cc.fill();
+        cc.stroke();
+        
+      }
+      else if(shapeChoice == "circle"){
+        console.log("got this back:"+shapeChoice);
+        cc.strokeStyle = "#0000ff";
+        cc.beginPath();
+        cc.arc(pos37[0], pos37[1], lineDistance(pos1[0],pos1[1],pos13[0],pos13[1]), 0, 2 * Math.PI);
+        cc.closePath();
+        cc.fillStyle = "#0000ff";
+        cc.fill();
+        cc.stroke();
+        
+      }
+   }
+}
+
+
+
+/*ACCES LIVE VIDEO*/
+function getVideo(){
+navigator.getUserMedia = navigator.getUserMedia||navigator.webkitGetUserMedia||navigator.mozGetUserMedia;
+
+if (navigator.getUserMedia) {
+   navigator.getUserMedia({ audio: false, video: true },
+      function(stream) {
+         var video = document.querySelector('video');
+         video.src = window.URL.createObjectURL(stream);
+         video.onloadedmetadata = function(e) {
+           video.play();
+         };
+      },
+      function(err) {
+         console.log("The following error occured: " + err.name);
+      }
+   );
+} else {
+   console.log("getUserMedia not supported");
+}
+}
+
+  // function getVideo(){
+  //   var stream;
+  //   var video = document.getElementById('inputVideo');
+
+  //   navigator.webkitGetUserMedia(
+  //     {video: true, audio: false}, // Options
+  //     function(localMediaStream) { // Success
+  //       stream = localMediaStream;
+  //       video.src = window.URL.createObjectURL(stream);
+  //     },
+  //     function(err) { // Failure
+  //       alert('getUserMedia failed: Code ' + err.code);
+  //     }
+  //   );
+  // }
+
+/*CALCULATE DISTANCE BETWEEN 2 POINTS*/
+  function lineDistance( x1,y1,x2,y2 )
+    {
+      var distance = 0;
+
+      if(y1 == y2){
+        distance = x2 - x1;
+      }
+      else{
+        var A = Math.abs(y2-y1);
+        var B = Math.abs(x2-x1);
+        var C = (A*A)+(B*B);
+        distance = Math.sqrt(C);
+        // if(i <11 ){
+        //   console.log(A,B,C);
+        //   i++;
+        // }
+      }
+      return distance;
+    }
+
+/*CALCULATE AVERAGE VALUE OF AN ARRAY*/
+    function getAverageValue(value){
+      averageValue.unshift(value);
+      averageValue = averageValue.slice(0,1000);
+      var average = 0;
+      for (var x= 0 ; x<averageValue.length; x++){
+          average = average + averageValue[x];
+      }
+      // console.log(averageValue.length);
+      // console.log(average);
+      average = average/averageValue.length;
+      return average;
+    }
+
+    function getShape(faceShape){
+      var shapeReturn = "";
+      graphicSwitch = true;
+
+      if (faceShape < 0.70){
+         // console.log("triangle");
+         shapeReturn = "triangle";
+         return shapeReturn;
+       } 
+       else if (faceShape >= 0.70 && faceShape< 0.85){
+         // console.log("square");
+         shapeReturn = "square";
+         return shapeReturn;
+       } 
+       else if (faceShape >= 0.85){
+         // console.log("circle");
+         shapeReturn = "circle";
+         return shapeReturn;
+      }
+    }
+
+</script>
