@@ -1,3 +1,6 @@
+using these script you can let a node server listen to messages it gets from visitors and make an arduino 
+do something you want
+
 add connect.js and node_modules/socket.io/node_modules/socket.io-client/socket.io.js to your index file
 call connect(); in your index file
 
